@@ -12,6 +12,11 @@ body {
     padding: 40px;
 }
 
+/* Prevent scroll when overlay is open */
+body.lock {
+    overflow: hidden;
+}
+
 h1 {
     text-align: center;
     color: white;
@@ -54,7 +59,7 @@ button:hover {
     padding: 14px 30px;
 }
 
-/* Editable list */
+/* Editable List */
 .list-item {
     display: flex;
     justify-content: space-between;
@@ -75,33 +80,35 @@ button:hover {
 .overlay {
     position: fixed;
     inset: 0;
+    width: 100vw;
+    height: 100vh;
     background: #6fa3ad;
     display: none;
     justify-content: center;
     align-items: center;
-    z-index: 999;
-    padding: 20px;
-}
-
-.card-wrapper {
-    width: 100%;
-    max-width: 900px;
+    z-index: 9999;
 }
 
 .card {
-    background-color: white;
+    background: white;
+    width: 90vw;
+    max-width: 1000px;
+    height: 85vh;
     padding: 60px 40px;
+    box-sizing: border-box;
     position: relative;
     text-align: center;
-    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 /* Close Button */
 .close-btn {
     position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 26px;
+    top: 20px;
+    right: 30px;
+    font-size: 32px;
     cursor: pointer;
     font-weight: bold;
 }
@@ -176,10 +183,7 @@ button:hover {
 
 <button class="match-button" onclick="showNextMatch()">Match Result</button>
 
-<!-- FULL SCREEN MATCH OVERLAY -->
-<div class="overlay" id="overlay">
-    <div class="card-wrapper" id="overlayContent"></div>
-</div>
+<div class="overlay" id="overlay"></div>
 
 <script>
 
@@ -218,7 +222,7 @@ function renderList() {
         item.className = "list-item";
         item.innerHTML = `
             <span contenteditable="true"
-                  onblur="updateMatch(${index}, this.innerText)">
+                onblur="updateMatch(${index}, this.innerText)">
                 ${match.university} / ${match.field} / ${match.city}
             </span>
             <button onclick="deleteMatch(${index})">Delete</button>
@@ -245,6 +249,7 @@ function deleteMatch(index) {
     renderList();
 }
 
+/* Proper shuffle */
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -252,30 +257,31 @@ function shuffleArray(array) {
     }
 }
 
+/* FULL RANDOM FIRST CYCLE */
+function prepareShuffle() {
+    shuffledMatches = [...matches];
+    shuffleArray(shuffledMatches);
+    currentIndex = 0;
+}
+
 function showNextMatch() {
     const name = document.getElementById("name").value;
 
-    if (!name) {
-        alert("Enter your full name first.");
-        return;
-    }
-
-    if (matches.length === 0) {
-        alert("Add at least one possible match.");
-        return;
-    }
+    if (!name) return alert("Enter your full name first.");
+    if (matches.length === 0) return alert("Add at least one possible match.");
 
     if (currentIndex === 0) {
-        shuffledMatches = [...matches];
-        shuffleArray(shuffledMatches);
+        prepareShuffle(); // always reshuffle at start of cycle
     }
 
     const match = shuffledMatches[currentIndex];
     const year = new Date().getFullYear();
 
-    const cardHTML = `
+    const overlay = document.getElementById("overlay");
+
+    overlay.innerHTML = `
         <div class="card">
-            <div class="close-btn" onclick="closeOverlay()">✕</div>
+            <div class="close-btn" id="closeBtn">✕</div>
 
             <div class="corner top-left"></div>
             <div class="corner top-right"></div>
@@ -301,8 +307,10 @@ function showNextMatch() {
         </div>
     `;
 
-    document.getElementById("overlayContent").innerHTML = cardHTML;
-    document.getElementById("overlay").style.display = "flex";
+    overlay.style.display = "flex";
+    document.body.classList.add("lock");
+
+    document.getElementById("closeBtn").addEventListener("click", closeOverlay);
 
     currentIndex++;
     if (currentIndex >= shuffledMatches.length) {
@@ -312,6 +320,7 @@ function showNextMatch() {
 
 function closeOverlay() {
     document.getElementById("overlay").style.display = "none";
+    document.body.classList.remove("lock");
 }
 
 </script>
