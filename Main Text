@@ -30,6 +30,7 @@ input {
     padding: 10px;
     margin: 6px 0;
     font-size: 15px;
+    box-sizing: border-box;
 }
 
 button {
@@ -53,18 +54,38 @@ button:hover {
     padding: 14px 30px;
 }
 
-.results-container {
+/* Editable list */
+.list-item {
     display: flex;
-    flex-direction: column;
-    gap: 40px;
+    justify-content: space-between;
     align-items: center;
+    background: #f3f3f3;
+    padding: 8px;
+    margin-top: 6px;
+    font-size: 14px;
+}
+
+.list-item button {
+    background: crimson;
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
+/* FULL SCREEN OVERLAY */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: #6fa3ad;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+    padding: 20px;
 }
 
 .card-wrapper {
-    background-color: #6fa3ad;
-    padding: 30px;
     width: 100%;
-    max-width: 950px;
+    max-width: 900px;
 }
 
 .card {
@@ -72,8 +93,20 @@ button:hover {
     padding: 60px 40px;
     position: relative;
     text-align: center;
+    box-sizing: border-box;
 }
 
+/* Close Button */
+.close-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 26px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* Decorative Corners */
 .corner {
     width: 40px;
     height: 40px;
@@ -137,12 +170,16 @@ button:hover {
     <input type="text" id="city" placeholder="City">
     <button onclick="addMatch()">Add to List</button>
 
+    <div id="matchList"></div>
     <p id="countDisplay"></p>
 </div>
 
 <button class="match-button" onclick="showNextMatch()">Match Result</button>
 
-<div class="results-container" id="results"></div>
+<!-- FULL SCREEN MATCH OVERLAY -->
+<div class="overlay" id="overlay">
+    <div class="card-wrapper" id="overlayContent"></div>
+</div>
 
 <script>
 
@@ -151,9 +188,9 @@ let shuffledMatches = [];
 let currentIndex = 0;
 
 function addMatch() {
-    const university = document.getElementById("university").value;
-    const field = document.getElementById("field").value;
-    const city = document.getElementById("city").value;
+    const university = universityInput.value;
+    const field = fieldInput.value;
+    const city = cityInput.value;
 
     if (!university || !field || !city) {
         alert("Fill all match fields.");
@@ -161,13 +198,51 @@ function addMatch() {
     }
 
     matches.push({ university, field, city });
+    renderList();
 
-    document.getElementById("countDisplay").innerText =
-        matches.length + " possible matches added.";
+    universityInput.value = "";
+    fieldInput.value = "";
+    cityInput.value = "";
+}
 
-    document.getElementById("university").value = "";
-    document.getElementById("field").value = "";
-    document.getElementById("city").value = "";
+const universityInput = document.getElementById("university");
+const fieldInput = document.getElementById("field");
+const cityInput = document.getElementById("city");
+
+function renderList() {
+    const list = document.getElementById("matchList");
+    list.innerHTML = "";
+
+    matches.forEach((match, index) => {
+        const item = document.createElement("div");
+        item.className = "list-item";
+        item.innerHTML = `
+            <span contenteditable="true"
+                  onblur="updateMatch(${index}, this.innerText)">
+                ${match.university} / ${match.field} / ${match.city}
+            </span>
+            <button onclick="deleteMatch(${index})">Delete</button>
+        `;
+        list.appendChild(item);
+    });
+
+    countDisplay.innerText = matches.length + " possible matches added.";
+}
+
+function updateMatch(index, text) {
+    const parts = text.split("/");
+    if (parts.length >= 3) {
+        matches[index] = {
+            university: parts[0].trim(),
+            field: parts[1].trim(),
+            city: parts[2].trim()
+        };
+    }
+}
+
+function deleteMatch(index) {
+    matches.splice(index, 1);
+    renderList();
 }
 
 function shuffleArray(array) {
@@ -199,42 +274,44 @@ function showNextMatch() {
     const year = new Date().getFullYear();
 
     const cardHTML = `
-        <div class="card-wrapper">
-            <div class="card">
+        <div class="card">
+            <div class="close-btn" onclick="closeOverlay()">✕</div>
 
-                <div class="corner top-left"></div>
-                <div class="corner top-right"></div>
-                <div class="corner bottom-left"></div>
-                <div class="corner bottom-right"></div>
+            <div class="corner top-left"></div>
+            <div class="corner top-right"></div>
+            <div class="corner bottom-left"></div>
+            <div class="corner bottom-right"></div>
 
-                <div class="carms">carms</div>
-                <div class="subtitle">MY MATCH RESULT</div>
+            <div class="carms">carms</div>
+            <div class="subtitle">MY MATCH RESULT</div>
 
-                <div class="iteration">
-                    ${year} R-1 MAIN RESIDENCY MATCH - FIRST ITERATION
-                </div>
+            <div class="iteration">
+                ${year} R-1 MAIN RESIDENCY MATCH - FIRST ITERATION
+            </div>
 
-                <div class="name">${name.toUpperCase()}</div>
+            <div class="name">${name.toUpperCase()}</div>
 
-                <div class="match-text">
-                    We are pleased to inform you that you have been matched to:
-                </div>
+            <div class="match-text">
+                We are pleased to inform you that you have been matched to:
+            </div>
 
-                <div class="program-line">
-                    ${match.university} / ${match.field} / ${match.city} / CMG Stream
-                </div>
-
+            <div class="program-line">
+                ${match.university} / ${match.field} / ${match.city} / CMG Stream
             </div>
         </div>
     `;
 
-    document.getElementById("results").innerHTML += cardHTML;
+    document.getElementById("overlayContent").innerHTML = cardHTML;
+    document.getElementById("overlay").style.display = "flex";
 
     currentIndex++;
-
     if (currentIndex >= shuffledMatches.length) {
-        currentIndex = 0; // restart new randomized cycle
+        currentIndex = 0;
     }
+}
+
+function closeOverlay() {
+    document.getElementById("overlay").style.display = "none";
 }
 
 </script>
