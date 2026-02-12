@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>CaRMS Match Day Simulator</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #6fa3ad;
+    padding: 40px;
+}
+
+h1 {
+    text-align: center;
+    color: white;
+}
+
+.form-container {
+    background: white;
+    padding: 20px;
+    max-width: 700px;
+    margin: 0 auto 30px auto;
+    border-radius: 8px;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 6px 0;
+    font-size: 15px;
+}
+
+button {
+    padding: 10px 18px;
+    font-size: 15px;
+    background-color: #5a2a83;
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin-top: 8px;
+}
+
+button:hover {
+    background-color: #4a206c;
+}
+
+.match-button {
+    display: block;
+    margin: 30px auto;
+    font-size: 18px;
+    padding: 14px 30px;
+}
+
+.results-container {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    align-items: center;
+}
+
+.card-wrapper {
+    background-color: #6fa3ad;
+    padding: 30px;
+    width: 100%;
+    max-width: 950px;
+}
+
+.card {
+    background-color: white;
+    padding: 60px 40px;
+    position: relative;
+    text-align: center;
+}
+
+.corner {
+    width: 40px;
+    height: 40px;
+    border: 8px solid #5a2a83;
+    position: absolute;
+}
+
+.top-left { top: 0; left: 0; border-right: none; border-bottom: none; }
+.top-right { top: 0; right: 0; border-left: none; border-bottom: none; }
+.bottom-left { bottom: 0; left: 0; border-right: none; border-top: none; }
+.bottom-right { bottom: 0; right: 0; border-left: none; border-top: none; }
+
+.carms {
+    font-size: 60px;
+    font-weight: bold;
+    color: #5a2a83;
+}
+
+.subtitle {
+    font-size: 22px;
+    color: #6fa3ad;
+    margin-bottom: 30px;
+    font-weight: 600;
+}
+
+.iteration {
+    font-size: 16px;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.name {
+    font-size: 32px;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+.match-text {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+.program-line {
+    font-size: 22px;
+    margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>CaRMS Match Day Simulator</h1>
+
+<div class="form-container">
+    <h3>Applicant Name</h3>
+    <input type="text" id="name" placeholder="Full Name">
+
+    <h3>Add Possible Match</h3>
+    <input type="text" id="university" placeholder="University">
+    <input type="text" id="field" placeholder="Field">
+    <input type="text" id="city" placeholder="City">
+    <button onclick="addMatch()">Add to List</button>
+
+    <p id="countDisplay"></p>
+</div>
+
+<button class="match-button" onclick="showNextMatch()">Match Result</button>
+
+<div class="results-container" id="results"></div>
+
+<script>
+
+let matches = [];
+let shuffledMatches = [];
+let currentIndex = 0;
+
+function addMatch() {
+    const university = document.getElementById("university").value;
+    const field = document.getElementById("field").value;
+    const city = document.getElementById("city").value;
+
+    if (!university || !field || !city) {
+        alert("Fill all match fields.");
+        return;
+    }
+
+    matches.push({ university, field, city });
+
+    document.getElementById("countDisplay").innerText =
+        matches.length + " possible matches added.";
+
+    document.getElementById("university").value = "";
+    document.getElementById("field").value = "";
+    document.getElementById("city").value = "";
+}
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+function showNextMatch() {
+    const name = document.getElementById("name").value;
+
+    if (!name) {
+        alert("Enter your full name first.");
+        return;
+    }
+
+    if (matches.length === 0) {
+        alert("Add at least one possible match.");
+        return;
+    }
+
+    if (currentIndex === 0) {
+        shuffledMatches = [...matches];
+        shuffleArray(shuffledMatches);
+    }
+
+    const match = shuffledMatches[currentIndex];
+    const year = new Date().getFullYear();
+
+    const cardHTML = `
+        <div class="card-wrapper">
+            <div class="card">
+
+                <div class="corner top-left"></div>
+                <div class="corner top-right"></div>
+                <div class="corner bottom-left"></div>
+                <div class="corner bottom-right"></div>
+
+                <div class="carms">carms</div>
+                <div class="subtitle">MY MATCH RESULT</div>
+
+                <div class="iteration">
+                    ${year} R-1 MAIN RESIDENCY MATCH - FIRST ITERATION
+                </div>
+
+                <div class="name">${name.toUpperCase()}</div>
+
+                <div class="match-text">
+                    We are pleased to inform you that you have been matched to:
+                </div>
+
+                <div class="program-line">
+                    ${match.university} / ${match.field} / ${match.city} / CMG Stream
+                </div>
+
+            </div>
+        </div>
+    `;
+
+    document.getElementById("results").innerHTML += cardHTML;
+
+    currentIndex++;
+
+    if (currentIndex >= shuffledMatches.length) {
+        currentIndex = 0; // restart new randomized cycle
+    }
+}
+
+</script>
+
+</body>
+</html>
